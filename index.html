@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>激活码生成器 - 视频音频分离工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 { color: #333; text-align: center; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; text-align: center; margin-bottom: 30px; font-size: 14px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; color: #555; margin-bottom: 8px; font-weight: 500; }
+        input {
+            width: 100%; padding: 15px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-size: 16px; font-family: 'Courier New', monospace;
+            letter-spacing: 1px; transition: border-color 0.3s;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        button {
+            width: 100%; padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 18px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .result {
+            margin-top: 25px; padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px; color: white; text-align: center; display: none;
+        }
+        .result.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .result-label { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
+        .result-code { font-size: 24px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 3px; word-break: break-all; }
+        .copy-btn { margin-top: 15px; background: rgba(255, 255, 255, 0.2); font-size: 14px; padding: 10px; }
+        .copy-btn:hover { background: rgba(255, 255, 255, 0.3); }
+        .tips {
+            margin-top: 20px; padding: 15px; background: #f5f5f5;
+            border-radius: 10px; font-size: 13px; color: #666;
+        }
+        .tips strong { color: #333; }
+        .note {
+            margin-top: 10px; padding: 10px; background: #e8f5e9;
+            border-radius: 8px; font-size: 12px; color: #2e7d32;
+            border: 1px solid #81c784;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 激活码生成器</h1>
+        <p class="subtitle">视频音频分离工具 - 开发者专用</p>
+        
+        <div class="note">
+            ✅ <strong>改良版本！</strong> 使用 SHA256 算法，与程序完全兼容！
+        </div>
+        
+        <div class="input-group">
+            <label for="machineCode">📋 请输入用户提供的机器码:</label>
+            <input type="text" id="machineCode" placeholder="例如: a1b2c3d4e5f6g7h8" maxlength="20">
+        </div>
+        <button onclick="generateKey()">生成激活码</button>
+        <div class="result" id="result">
+            <div class="result-label">✅ 生成的激活码:</div>
+            <div class="result-code" id="activationCode"></div>
+            <button class="copy-btn" onclick="copyCode()">📋 复制激活码</button>
+        </div>
+        <div class="tips">
+            <strong>💡 使用说明:</strong><br>
+            1. 用户运行程序后会显示机器码<br>
+            2. 用户将机器码发送给你<br>
+            3. 在此处输入机器码生成激活码<br>
+            4. 将激活码发送给用户完成激活
+        </div>
+    </div>
+
+    <script>
+        async function generateKey() {
+            const machineCode = document.getElementById('machineCode').value.trim();
+            if (!machineCode) { alert('请输入机器码！'); return; }
+            if (machineCode.length < 8) { alert('机器码长度不足！'); return; }
+            
+            const secret = 'VideoAudioExtractor2024';
+            const combined = machineCode + secret;
+            
+            const encoder = new TextEncoder();
+            const data = encoder.encode(combined);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            const code = hashHex.substring(0, 4).toUpperCase() + '-' +
+                         hashHex.substring(4, 8).toUpperCase() + '-' +
+                         hashHex.substring(8, 12).toUpperCase() + '-' +
+                         hashHex.substring(12, 16).toUpperCase();
+            
+            document.getElementById('activationCode').textContent = code;
+            document.getElementById('result').classList.add('show');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('activationCode').textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => { alert('激活码已复制到剪贴板！'); }).catch(() => { fallbackCopy(code); });
+            } else { fallbackCopy(code); }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try { document.execCommand('copy'); alert('激活码已复制到剪贴板！'); }
+            catch (err) { alert('复制失败，请手动选择复制'); }
+            document.body.removeChild(textarea);
+        }
+
+        document.getElementById('machineCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { generateKey(); }
+        });
+    </script>
+</body>
+</html>
